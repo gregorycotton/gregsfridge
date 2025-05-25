@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Greg's Fridge</title>
+    <style>
+       * {
+            margin: 0;
+            padding: 0;
+        }
+
+        button {
+            padding: 5px;
+        }
+
+        html {
+            margin: 5px;
+            padding: 5px;
+            font-family: Arial, sans-serif;
+            overflow: scroll;
+        }
+
+        .fridgenotes {
+            position: absolute;
+            display: block;
+            width: 100%;
+
+        }
+
+        .container {
+            margin: 30px 0px;
+        }
+
+        hr {
+            border: #000 solid 0.5px;
+        }
+
+        h1 {
+            padding: 0px 0px 15px 0px;
+        }
+
+        .card-body {
+            padding: 15px 0px 15px 0px;
+            width: 950px;
+        }
+
+        span {
+            border: #000 solid 1px;
+            background-color: #fff;
+            filter: drop-shadow(-1px 1px 1px #000);
+            padding: 6px;
+            margin: 5px 12px 5px 0px;
+        }
+
+        .rotate {
+            float: left;
+            transform-origin: center;
+        }
+
+        a.link,
+        a.link:link,
+        a.link:visited,
+        a.link:hover {
+            text-decoration: underline;
+            color: #0000EE;
+        }
+
+        a.link:active {
+            text-decoration: underline;
+            color: #551A8B;
+        }
+
+        #page-content {
+            width: 950px;
+        }
+
+        @media screen and (max-width: 1000px) {
+            #page-content {
+                width: 100%;
+            }
+
+            .card-body {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="page-content">
+        <h1>Greg's Fridge&nbsp;&#128722;</h1>
+        <p>Leave a <a class="link" target="_blank" href="https://en.wikipedia.org/wiki/Magnetic_Poetry">note</a> on my
+            fridge for anyone to see. Notes are anonymous and anyone can leave one, so please
+            be nice – spam or otherwise insensitive stuff will be removed. My fridge is only so big, so no more than 100
+            characters per note!
+        </p>
+
+        <div class="container">
+            <form id="comments">
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name</label>
+                    <br>
+                    <input id="name" name="name" type="text" class="form-control" autocomplete="off"
+                        style="height:25px;" maxlength="25" required oninput="validate(this)">
+                </div>
+                <br>
+                <div class="mb-3">
+                    <label for="comment" class="form-label">Note</label>
+                    <br>
+                    <textarea id="comment" name="comment" class="form-control" style="height:50px;" maxlength="100"
+                        required oninput="validate(this)"></textarea>
+                </div>
+                <br>
+                <button class="btn btn-outline-primary">Add to fridge</button>
+            </form>
+        </div>
+
+        <hr>
+
+        <div class="fridgenotes">
+        </div>
+    </div>
+    <script src="client.js"></script>
+</body>
+</html>
