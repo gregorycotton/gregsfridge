@@ -3,10 +3,11 @@ node_modules/
 npm-debug.log*
 yarn-error.log
 
-# Environment variables
+# Environment variables/DB
 .env
 *.env
 .env.*
+*.db
 
 # Logs
 logs
@@ -25,3 +26,6 @@ Thumbs.db
 # Build output
 dist/
 build/
+
+# Extra
+make_db.js

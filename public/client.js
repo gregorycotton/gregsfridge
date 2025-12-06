@@ -4,11 +4,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+
         const response = await fetch('/api/comments', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 name: form.name.value,
                 comment: form.comment.value
@@ -26,30 +25,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const main_div = document.createElement('div');
         const card_body = document.createElement('div');
 
-        main_div.setAttribute('class', 'newnote');
-        card_body.setAttribute('class', 'card-body');
+        main_div.className = 'newnote';
+        card_body.className = 'card-body';
 
         const fields = ['name', 'time', 'comment'];
         fields.forEach(field => {
             let content = doc[field];
-            if (field === 'time') {
-                content = new Date(content).toLocaleDateString();
-            }
+            if (field === 'time') content = new Date(content).toLocaleDateString();
+
             const words = content.replace(/\s+/g, ' ').trim().split(" ");
-            let withSpans = "";
+            let html = "";
 
             words.forEach(word => {
-                withSpans += `<span class="rotate">${word}</span> `;
+                html += `<span class="rotate">${word}</span> `;
             });
 
             if (field === 'name') {
-                card_body.insertAdjacentHTML('beforeend', withSpans);
+                card_body.insertAdjacentHTML('beforeend', html);
             } else {
-                card_body.insertAdjacentHTML('beforeend', withSpans + "<br style=\"clear:both\">");
-            }
-
-            if (field !== 'name') {
-                card_body.insertAdjacentHTML('beforeend', "<br>");
+                card_body.insertAdjacentHTML('beforeend', html + "<br style=\"clear:both\"><br>");
             }
         });
 
@@ -75,13 +69,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const nameField = document.querySelector('[name="name"]');
     nameField.addEventListener('keypress', function (event) {
-        if (event.keyCode === 32) {
-            event.preventDefault();
-        }
+        if (event.keyCode === 32) event.preventDefault();
     });
 });
 
 function validate(input) {
-    if (/^\s/.test(input.value))
-        input.value = '';
+    if (/^\s/.test(input.value)) input.value = '';
 }
