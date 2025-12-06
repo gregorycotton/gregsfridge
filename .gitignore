@@ -8,6 +8,7 @@ yarn-error.log
 *.env
 .env.*
 *.db
+comments.json
 
 # Logs
 logs
