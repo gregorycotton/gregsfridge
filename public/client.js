@@ -33,17 +33,18 @@ document.addEventListener('DOMContentLoaded', () => {
             let content = doc[field];
             if (field === 'time') content = new Date(content).toLocaleDateString();
 
-            const words = content.replace(/\s+/g, ' ').trim().split(" ");
-            let html = "";
-
+            const words = content.replace(/\s+/g, ' ').trim().split(' ');
             words.forEach(word => {
-                html += `<span class="rotate">${word}</span> `;
+                const span = document.createElement('span');
+                span.className = 'rotate';
+                span.textContent = word;
+                card_body.append(span, document.createTextNode(' '));
             });
 
-            if (field === 'name') {
-                card_body.insertAdjacentHTML('beforeend', html);
-            } else {
-                card_body.insertAdjacentHTML('beforeend', html + "<br style=\"clear:both\"><br>");
+            if (field !== 'name') {
+                const lineBreak = document.createElement('br');
+                lineBreak.style.clear = 'both';
+                card_body.append(lineBreak, document.createElement('br'));
             }
         });
 
@@ -61,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchComments() {
         const response = await fetch('/api/comments');
         const comments = await response.json();
-        div.innerHTML = '';
+        div.replaceChildren();
         comments.forEach(renderList);
     }
 

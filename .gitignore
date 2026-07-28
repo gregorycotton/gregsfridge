@@ -8,7 +8,18 @@ yarn-error.log
 *.env
 .env.*
 *.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
 comments.json
+
+# Firebase/Google service credentials
+serviceAccountKey.json
+firebase-adminsdk-*.json
+*service-account*.json
+.firebase/
 
 # Logs
 logs
