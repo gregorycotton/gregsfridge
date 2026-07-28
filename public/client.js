@@ -1,6 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('comments');
     const div = document.querySelector('.fridgenotes');
+    const status = document.getElementById('comments-status');
+    const sentinel = document.getElementById('comments-sentinel');
+    let nextCursor = null;
+    let hasMore = true;
+    let loading = false;
+    let requestVersion = 0;
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -17,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (response.ok) {
             form.name.value = '';
             form.comment.value = '';
-            fetchComments();
+            resetComments();
         }
     });
 
@@ -56,17 +62,52 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         main_div.appendChild(card_body);
-        div.prepend(main_div);
+        div.insertBefore(main_div, status);
     }
 
     async function fetchComments() {
-        const response = await fetch('/api/comments');
-        const comments = await response.json();
-        div.replaceChildren();
-        comments.forEach(renderList);
+        if (loading || !hasMore) return;
+        const version = requestVersion;
+        loading = true;
+        status.textContent = 'Loading…';
+
+        try {
+            const params = new URLSearchParams();
+            if (nextCursor) {
+                params.set('beforeTime', nextCursor.time);
+                params.set('beforeId', nextCursor.id);
+            }
+            const query = nextCursor ? `?${params}` : '';
+            const response = await fetch(`/api/comments${query}`);
+            if (!response.ok) throw new Error('Comments could not be loaded');
+            const result = await response.json();
+            if (version !== requestVersion) return;
+
+            result.comments.forEach(renderList);
+            nextCursor = result.nextCursor;
+            hasMore = Boolean(nextCursor);
+            status.textContent = '';
+        } catch (error) {
+            if (version === requestVersion) status.textContent = error.message;
+        } finally {
+            if (version === requestVersion) loading = false;
+        }
     }
 
-    fetchComments();
+    function resetComments() {
+        requestVersion += 1;
+        nextCursor = null;
+        hasMore = true;
+        loading = false;
+        div.querySelectorAll('.newnote').forEach(note => note.remove());
+        fetchComments();
+    }
+
+    const observer = new IntersectionObserver(entries => {
+        if (entries.some(entry => entry.isIntersecting)) fetchComments();
+    });
+    observer.observe(sentinel);
+    resetComments();
 
     const nameField = document.querySelector('[name="name"]');
     nameField.addEventListener('keypress', function (event) {

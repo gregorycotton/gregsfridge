@@ -12,6 +12,7 @@ try {
 const app = express();
 const port = process.env.PORT || 3000;
 const inputLimits = { name: 25, comment: 100 };
+const commentsPageSize = 10;
 const unsafeControlCharacters = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/u;
 
 const db = new DatabaseSync(
@@ -24,13 +25,23 @@ db.exec(`
     name TEXT NOT NULL,
     datetime TEXT NOT NULL,
     comment TEXT NOT NULL
-  )
+  );
+  CREATE INDEX IF NOT EXISTS comments_datetime_id_idx
+    ON comments (datetime DESC, id DESC);
 `);
 
-const getComments = db.prepare(`
+const getFirstComments = db.prepare(`
   SELECT id, name, datetime AS time, comment
   FROM comments
-  ORDER BY datetime ASC
+  ORDER BY datetime DESC, id DESC
+  LIMIT ?
+`);
+const getCommentsBefore = db.prepare(`
+  SELECT id, name, datetime AS time, comment
+  FROM comments
+  WHERE (datetime, id) < (?, ?)
+  ORDER BY datetime DESC, id DESC
+  LIMIT ?
 `);
 const addComment = db.prepare(`
   INSERT INTO comments (id, name, datetime, comment)
@@ -80,8 +91,32 @@ app.get('/', (req, res) => {
 
 /* Get comments */
 app.get('/api/comments', (req, res) => {
+  const beforeTime = req.query.beforeTime;
+  const beforeId = req.query.beforeId;
+  const hasCursor = beforeTime !== undefined || beforeId !== undefined;
+  if (hasCursor && (
+    typeof beforeTime !== 'string' ||
+    typeof beforeId !== 'string' ||
+    !beforeTime ||
+    !beforeId ||
+    beforeTime.length > 100 ||
+    beforeId.length > 100
+  )) {
+    res.status(400).json({ error: 'Invalid comments cursor' });
+    return;
+  }
+
   try {
-    res.json(getComments.all());
+    const rows = hasCursor
+      ? getCommentsBefore.all(beforeTime, beforeId, commentsPageSize + 1)
+      : getFirstComments.all(commentsPageSize + 1);
+    const hasMore = rows.length > commentsPageSize;
+    const comments = hasMore ? rows.slice(0, commentsPageSize) : rows;
+    const last = comments.at(-1);
+    res.json({
+      comments,
+      nextCursor: hasMore ? { time: last.time, id: last.id } : null
+    });
   } catch (err) {
     res.status(500).json({ error: 'DB read error' });
   }

@@ -42,3 +42,4 @@ build/
 # Extra
 make_db.js
 .local-admin/
+/SOP.md

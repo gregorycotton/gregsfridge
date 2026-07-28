@@ -37,10 +37,11 @@ test('serves the site and safely validates comments', async () => {
   });
   assert.equal(created.status, 201);
 
-  const comments = await fetch(`${baseUrl}/api/comments`).then(res => res.json());
-  assert.equal(comments.length, 1);
-  assert.equal(comments[0].name, 'Test');
-  assert.equal(comments[0].comment, 'SQLite works');
+  const firstResult = await fetch(`${baseUrl}/api/comments`).then(res => res.json());
+  assert.equal(firstResult.comments.length, 1);
+  assert.equal(firstResult.comments[0].name, 'Test');
+  assert.equal(firstResult.comments[0].comment, 'SQLite works');
+  assert.equal(firstResult.nextCursor, null);
 
   const xss = {
     name: '<img src=x>',
@@ -54,9 +55,9 @@ test('serves the site and safely validates comments', async () => {
   assert.equal(xssCreated.status, 201);
 
   const stored = await fetch(`${baseUrl}/api/comments`).then(res => res.json());
-  assert.equal(stored.length, 2);
-  assert.equal(stored[1].name, xss.name);
-  assert.equal(stored[1].comment, xss.comment);
+  assert.equal(stored.comments.length, 2);
+  const storedXss = stored.comments.find(comment => comment.comment === xss.comment);
+  assert.equal(storedXss.name, xss.name);
 
   const invalidInputs = [
     { name: '', comment: 'Empty name' },
@@ -75,9 +76,35 @@ test('serves the site and safely validates comments', async () => {
   }
 
   const afterInvalidInputs = await fetch(`${baseUrl}/api/comments`).then(res => res.json());
-  assert.equal(afterInvalidInputs.length, 2);
+  assert.equal(afterInvalidInputs.comments.length, 2);
+
+  for (let index = 0; index < 10; index += 1) {
+    const response = await fetch(`${baseUrl}/api/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: `Bulk${index}`, comment: `Comment ${index}` })
+    });
+    assert.equal(response.status, 201);
+  }
+
+  const pageOne = await fetch(`${baseUrl}/api/comments`).then(res => res.json());
+  assert.equal(pageOne.comments.length, 10);
+  assert.ok(pageOne.nextCursor);
+
+  const cursor = new URLSearchParams({
+    beforeTime: pageOne.nextCursor.time,
+    beforeId: pageOne.nextCursor.id
+  });
+  const pageTwo = await fetch(`${baseUrl}/api/comments?${cursor}`).then(res => res.json());
+  assert.equal(pageTwo.comments.length, 2);
+  assert.equal(pageTwo.nextCursor, null);
+  assert.equal(new Set([...pageOne.comments, ...pageTwo.comments].map(comment => comment.id)).size, 12);
+
+  const badCursor = await fetch(`${baseUrl}/api/comments?beforeTime=missing`);
+  assert.equal(badCursor.status, 400);
 
   const client = readFileSync(path.join(__dirname, '../public/client.js'), 'utf8');
   assert.doesNotMatch(client, /\b(?:innerHTML|outerHTML|insertAdjacentHTML)\b/);
   assert.match(client, /\.textContent\s*=/);
+  assert.match(client, /IntersectionObserver/);
 });
